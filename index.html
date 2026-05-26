@@ -9,26 +9,26 @@
   :root { --bg:#f6f7f9; --fg:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#111827; --soft:#ffffff; --danger:#b91c1c; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif; background:var(--bg); color:var(--fg); }
-  header { position:sticky; top:0; z-index:10; background:linear-gradient(180deg,#dff3ff 0%,#eef8ff 100%); backdrop-filter: blur(10px); border-bottom:1px solid #b7def5; padding:12px 14px 10px; }
-  h1 { margin:0 0 8px; font-size:18px; letter-spacing:-.04em; }
-  .topline { display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
-  .count { font-size:13px; color:var(--muted); }
-  .toolbar { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
-  input, select, button { font:inherit; border:1px solid var(--line); border-radius:10px; background:#fff; min-height:40px; }
+  header { position:sticky; top:0; z-index:10; background:linear-gradient(180deg,#dff3ff 0%,#eef8ff 100%); backdrop-filter: blur(10px); border-bottom:1px solid #b7def5; padding:6px 10px; }
+  h1 { margin:0; font-size:15px; letter-spacing:-.04em; }
+  .topline { display:flex; gap:6px; align-items:center; justify-content:space-between; flex-wrap:nowrap; min-height:28px; }
+  .count { font-size:11px; color:var(--muted); white-space:nowrap; }
+  .toolbar { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px; }
+  input, select, button { font:inherit; border:1px solid var(--line); border-radius:10px; background:#fff; min-height:34px; }
   input { width:100%; padding:0 12px; }
   select { width:100%; padding:0 10px; }
   button { padding:0 12px; font-weight:700; cursor:pointer; }
-  .filters { display:block; margin-top:8px; }
-  .actions { display:grid; grid-template-columns:1fr; gap:8px; margin-top:8px; }
+  .filters { display:block; margin-top:6px; }
+  .actions { display:grid; grid-template-columns:1fr; gap:6px; margin-top:6px; }
   #bulkCategory { display:none !important; }
   #sheetFilter { width:100%; min-height:40px; font-weight:800; border-color:#b7def5; background:#fff; }
-  .monthTabs { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; margin-top:8px; }
-  .monthBtn { min-height:34px; padding:0 4px; border-radius:10px; border:1px solid #b7def5; background:rgba(255,255,255,.82); font-size:12px; font-weight:800; color:#1f2937; }
+  .monthTabs { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; margin-top:6px; }
+  .monthBtn { min-height:28px; padding:0 3px; border-radius:9px; border:1px solid #b7def5; background:rgba(255,255,255,.82); font-size:11px; font-weight:800; color:#1f2937; }
   .monthBtn.active { background:#111827; color:#fff; border-color:#111827; }
-  .topToggleIcon { width:28px; min-width:28px; height:28px; min-height:28px; padding:0; border-radius:999px; border:1px solid #b7def5; background:rgba(255,255,255,.86); font-size:13px; line-height:1; font-weight:900; display:inline-flex; align-items:center; justify-content:center; }
+  .topToggleIcon { width:24px; min-width:24px; height:24px; min-height:24px; padding:0; border-radius:999px; border:1px solid #b7def5; background:rgba(255,255,255,.86); font-size:12px; line-height:1; font-weight:900; display:inline-flex; align-items:center; justify-content:center; }
   .collapsibleTop { overflow:hidden; transition:max-height .22s ease, opacity .18s ease, margin .18s ease; max-height:260px; opacity:1; }
   header.collapsed .collapsibleTop { max-height:0; opacity:0; margin:0; pointer-events:none; }
-  header.collapsed { padding-bottom:8px; }
+  header.collapsed { padding-bottom:6px; }
   header.collapsed .toolbar,
   header.collapsed .monthTabs,
   header.collapsed .filters { margin-top:0; }
@@ -77,7 +77,7 @@
   .summaryTable tfoot td { background:#111827; color:#fff; font-weight:800; border-bottom:0; }
   .summaryTable .catName { font-weight:700; }
   .summaryBadge { display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:12px; font-weight:700; }
-  .saveStatus { display:inline-flex; align-items:center; justify-content:center; min-height:28px; padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.75); border:1px solid #b7def5; font-size:12px; font-weight:800; color:#1f2937; white-space:nowrap; }
+  .saveStatus { display:none !important; }
   .loginBack { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:18px; background:linear-gradient(180deg,#f8fafc,#eef2ff); }
   .loginPanel { width:min(420px,100%); background:#fff; border:1px solid var(--line); border-radius:24px; padding:22px; box-shadow:0 20px 50px rgba(17,24,39,.14); }
   .loginPanel h2 { margin:0 0 8px; font-size:22px; letter-spacing:-.05em; }
@@ -95,7 +95,7 @@
 <div class="loginBack" id="loginBack">
   <div class="loginPanel">
     <h2>소득세 분류 수정기</h2>
-    <p>PIN을 입력하세요.</p>
+    <p>PIN</p>
     <input id="pinInput" type="password" autocomplete="current-password" placeholder="PIN" />
     <button class="primary" id="loginBtn" style="width:100%;">들어가기</button>
     <div class="loginError" id="loginError"></div>
@@ -104,8 +104,7 @@
 <header>
   <div class="topline">
     <h1>소득세 분류 수정기</h1>
-    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-      <div class="saveStatus" id="saveStatus">확인 전</div>
+    <div style="display:flex; align-items:center; gap:4px; flex-wrap:nowrap;">
       <div class="count" id="countText">불러오는 중...</div>
       <button class="topToggleIcon" id="toggleTopBtn" type="button" aria-label="상단 접기">▲</button>
     </div>
@@ -163,7 +162,6 @@ const CATEGORIES = ["미분류","기업업무추진비","차량유지비","지�
 const QUICK_CATEGORIES = ["미분류","기부금","소모품비","차량유지비","지급수수료","사무용품비","통신비","광고선전비","접대비","개인사용","제외"];
 let workbook, rows = [], changed = new Map();
 let APP_PIN = "";
-let IS_GAS = typeof google !== "undefined" && google.script && google.script.run;
 let saveTimer = null;
 let pendingSave = new Map();
 let currentMonthFilter = "all";
@@ -276,6 +274,71 @@ function setStatus(msg) {
   el.style.borderColor = msg && msg.includes("실패") ? "#fca5a5" : "#b7def5";
   el.style.color = msg && msg.includes("실패") ? "#b91c1c" : "#1f2937";
 }
+function jsonpRequest(params, onSuccess, onFailure) {
+  const callbackName = "__gasJsonp_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+  const script = document.createElement("script");
+  const timer = setTimeout(() => {
+    cleanup();
+    if (onFailure) onFailure(new Error("GAS 응답 시간 초과"));
+  }, 15000);
+
+  function cleanup() {
+    clearTimeout(timer);
+    try { delete window[callbackName]; } catch(e) { window[callbackName] = undefined; }
+    if (script && script.parentNode) script.parentNode.removeChild(script);
+  }
+
+  window[callbackName] = function(payload) {
+    cleanup();
+    if (payload && payload.ok === false) {
+      if (onFailure) onFailure(new Error(payload.error || "GAS 오류"));
+      return;
+    }
+    if (onSuccess) onSuccess(payload);
+  };
+
+  const url = new URL(WEB_APP_URL);
+  Object.entries(params || {}).forEach(([key, value]) => {
+    url.searchParams.set(key, typeof value === "string" ? value : JSON.stringify(value));
+  });
+  url.searchParams.set("callback", callbackName);
+  url.searchParams.set("_", String(Date.now()));
+
+  script.onerror = function() {
+    cleanup();
+    if (onFailure) onFailure(new Error("GAS 스크립트 로드 실패"));
+  };
+
+  script.src = url.toString();
+  document.body.appendChild(script);
+}
+function runGas(functionName, args, onSuccess, onFailure) {
+  const actionMap = {
+    getState: "getState",
+    saveChanges: "saveChanges",
+    resetChanges: "resetChanges",
+    getChangeLog: "getChangeLog"
+  };
+  const action = actionMap[functionName];
+  if (!action) {
+    if (onFailure) onFailure(new Error("알 수 없는 GAS 함수: " + functionName));
+    return;
+  }
+
+  const params = { action };
+  if (functionName === "getState") {
+    params.pin = args[0];
+  } else if (functionName === "saveChanges") {
+    params.pin = args[0];
+    params.updates = JSON.stringify(args[1] || []);
+  } else if (functionName === "resetChanges") {
+    params.pin = args[0];
+  } else if (functionName === "getChangeLog") {
+    params.pin = args[0];
+  }
+
+  jsonpRequest(params, onSuccess, onFailure);
+}
 function setRowCategory(row, nextCategory) {
   if (nextCategory === row.originalCategory) changed.delete(row.id); else changed.set(row.id, nextCategory);
   pendingSave.set(row.id, {
@@ -291,8 +354,8 @@ function setRowCategory(row, nextCategory) {
   scheduleSave();
 }
 function scheduleSave() {
-  if (!IS_GAS || !APP_PIN) {
-    setStatus("임시");
+  if (!APP_PIN) {
+    setStatus("");
     return;
   }
   setStatus("저장 대기");
@@ -300,19 +363,20 @@ function scheduleSave() {
   saveTimer = setTimeout(flushSave, 450);
 }
 function flushSave() {
-  if (!pendingSave.size || !IS_GAS || !APP_PIN) return;
+  if (!pendingSave.size || !APP_PIN) return;
   const updates = Array.from(pendingSave.values());
   pendingSave.clear();
   setStatus("저장 중");
-  google.script.run
-    .withSuccessHandler(res => {
+  runGas("saveChanges", [APP_PIN, updates],
+    res => {
       setStatus("저장됨");
-    })
-    .withFailureHandler(err => {
+    },
+    err => {
       updates.forEach(u => pendingSave.set(u.id, u));
       setStatus("저장 실패");
-    })
-    .saveChanges(APP_PIN, updates);
+      console.error(err);
+    }
+  );
 }
 function renderCategoryButtons(row, pool, current) {
   return pool.map(cat => {
@@ -474,8 +538,8 @@ function restoreTopAreaState() {
   const header = document.querySelector("header");
   const btn = document.getElementById("toggleTopBtn");
   if (!header || !btn) return;
-  let collapsed = false;
-  try { collapsed = localStorage.getItem("incomeTaxTopCollapsed") === "1"; } catch(e) {}
+  let collapsed = true;
+  try { collapsed = localStorage.getItem("incomeTaxTopCollapsed") !== "0"; } catch(e) {}
   header.classList.toggle("collapsed", collapsed);
   btn.textContent = collapsed ? "▼" : "▲";
   btn.setAttribute("aria-label", collapsed ? "상단 펼치기" : "상단 접기");
@@ -500,7 +564,7 @@ function unlockWithPin() {
   err.textContent = "";
   if (!IS_GAS) {
     document.getElementById("loginBack").style.display = "none";
-    setStatus("임시");
+    setStatus("");
     renderAll();
     return;
   }
