@@ -25,6 +25,13 @@
   .monthTabs { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; margin-top:8px; }
   .monthBtn { min-height:34px; padding:0 4px; border-radius:10px; border:1px solid #b7def5; background:rgba(255,255,255,.82); font-size:12px; font-weight:800; color:#1f2937; }
   .monthBtn.active { background:#111827; color:#fff; border-color:#111827; }
+  .topCompactBtn { min-height:40px; border-color:#b7def5; background:rgba(255,255,255,.9); font-weight:900; }
+  .collapsibleTop { overflow:hidden; transition:max-height .22s ease, opacity .18s ease, margin .18s ease; max-height:260px; opacity:1; }
+  header.collapsed .collapsibleTop { max-height:0; opacity:0; margin:0; pointer-events:none; }
+  header.collapsed { padding-bottom:8px; }
+  header.collapsed .toolbar,
+  header.collapsed .monthTabs,
+  header.collapsed .filters { margin-top:0; }
   .primary { background:var(--accent); color:#fff; border-color:var(--accent); }
   .ghost { background:#fff; }
   main { padding:12px 10px 88px; max-width:960px; margin:0 auto; }
@@ -70,7 +77,7 @@
   .summaryTable tfoot td { background:#111827; color:#fff; font-weight:800; border-bottom:0; }
   .summaryTable .catName { font-weight:700; }
   .summaryBadge { display:inline-flex; align-items:center; gap:6px; min-height:30px; padding:0 10px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:12px; font-weight:700; }
-  .saveStatus { display:none !important; }
+  .saveStatus { display:inline-flex; align-items:center; justify-content:center; min-height:28px; padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.75); border:1px solid #b7def5; font-size:12px; font-weight:800; color:#1f2937; white-space:nowrap; }
   .loginBack { position:fixed; inset:0; z-index:100; display:flex; align-items:center; justify-content:center; padding:18px; background:linear-gradient(180deg,#f8fafc,#eef2ff); }
   .loginPanel { width:min(420px,100%); background:#fff; border:1px solid var(--line); border-radius:24px; padding:22px; box-shadow:0 20px 50px rgba(17,24,39,.14); }
   .loginPanel h2 { margin:0 0 8px; font-size:22px; letter-spacing:-.05em; }
@@ -97,21 +104,27 @@
 <header>
   <div class="topline">
     <h1>소득세 분류 수정기</h1>
-    <div class="count" id="countText">불러오는 중...</div>
-  </div>
-  <div class="toolbar">
-    <input id="searchInput" placeholder="검색" />
-    <select id="categoryFilter"><option value="all">전체 분류</option></select>
+    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <div class="saveStatus" id="saveStatus">확인 전</div>
+      <div class="count" id="countText">불러오는 중...</div>
+    </div>
   </div>
   <div class="actions">
     <button class="primary" id="openSummaryBtn">통합확인</button>
-    <select id="sheetFilter"><option value="all">전체 카드/계좌</option></select>
+    <button class="topCompactBtn" id="toggleTopBtn" type="button">접기</button>
   </div>
-  <div class="monthTabs" id="monthTabs"></div>
-  <div class="filters">
-    <select id="bulkCategory"><option value="">보이는 항목 일괄변경</option></select>
+  <div class="collapsibleTop" id="collapsibleTop">
+    <div class="toolbar">
+      <input id="searchInput" placeholder="검색" />
+      <select id="categoryFilter"><option value="all">전체 분류</option></select>
+    </div>
+    <div class="filters" style="display:block !important;">
+      <select id="sheetFilter"><option value="all">전체 카드/계좌</option></select>
+      <select id="bulkCategory"><option value="">보이는 항목 일괄변경</option></select>
+    </div>
+    <div class="monthTabs" id="monthTabs"></div>
   </div>
-  <div class="saveStatus" id="saveStatus" aria-hidden="true"></div>
+  
 </header>
 <main>
   <section id="list"></section>
@@ -257,9 +270,11 @@ function renderSummary() {
   box.innerHTML = top.map(([cat,sum])=>`<div class="sumitem"><b>${esc(cat)}</b><span>${fmtMoney(sum)}</span></div>`).join("");
 }
 function setStatus(msg) {
-  // 화면에는 시스템/저장 메시지를 표시하지 않습니다.
   const el = document.getElementById("saveStatus");
-  if (el) el.textContent = msg || "";
+  if (!el) return;
+  el.textContent = msg || "";
+  el.style.borderColor = msg && msg.includes("실패") ? "#fca5a5" : "#b7def5";
+  el.style.color = msg && msg.includes("실패") ? "#b91c1c" : "#1f2937";
 }
 function setRowCategory(row, nextCategory) {
   if (nextCategory === row.originalCategory) changed.delete(row.id); else changed.set(row.id, nextCategory);
@@ -277,10 +292,10 @@ function setRowCategory(row, nextCategory) {
 }
 function scheduleSave() {
   if (!IS_GAS || !APP_PIN) {
-    setStatus("");
+    setStatus("임시");
     return;
   }
-  setStatus("저장 대기 중...");
+  setStatus("저장 대기");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(flushSave, 450);
 }
@@ -288,14 +303,14 @@ function flushSave() {
   if (!pendingSave.size || !IS_GAS || !APP_PIN) return;
   const updates = Array.from(pendingSave.values());
   pendingSave.clear();
-  setStatus(`저장 중... ${updates.length}건`);
+  setStatus("저장 중");
   google.script.run
     .withSuccessHandler(res => {
-      setStatus(`자동저장 완료 · 수정 ${res.changedCount || changed.size}건`);
+      setStatus("저장됨");
     })
     .withFailureHandler(err => {
       updates.forEach(u => pendingSave.set(u.id, u));
-      setStatus("저장 실패: " + (err && err.message ? err.message : err));
+      setStatus("저장 실패");
     })
     .saveChanges(APP_PIN, updates);
 }
@@ -437,12 +452,31 @@ function resetChanges() {
   pendingSave.clear();
   renderAll();
   if (IS_GAS && APP_PIN) {
-    setStatus("변경취소 저장 중...");
+    setStatus("취소 저장 중");
     google.script.run
-      .withSuccessHandler(() => setStatus("변경취소 완료"))
-      .withFailureHandler(err => setStatus("변경취소 저장 실패: " + (err && err.message ? err.message : err)))
+      .withSuccessHandler(() => setStatus("취소 완료"))
+      .withFailureHandler(err => setStatus("취소 실패"))
       .resetChanges(APP_PIN);
   }
+}
+
+
+function toggleTopArea() {
+  const header = document.querySelector("header");
+  const btn = document.getElementById("toggleTopBtn");
+  if (!header || !btn) return;
+  const collapsed = header.classList.toggle("collapsed");
+  btn.textContent = collapsed ? "펼치기" : "접기";
+  try { localStorage.setItem("incomeTaxTopCollapsed", collapsed ? "1" : "0"); } catch(e) {}
+}
+function restoreTopAreaState() {
+  const header = document.querySelector("header");
+  const btn = document.getElementById("toggleTopBtn");
+  if (!header || !btn) return;
+  let collapsed = false;
+  try { collapsed = localStorage.getItem("incomeTaxTopCollapsed") === "1"; } catch(e) {}
+  header.classList.toggle("collapsed", collapsed);
+  btn.textContent = collapsed ? "펼치기" : "접기";
 }
 
 function applyServerState(state) {
@@ -451,7 +485,7 @@ function applyServerState(state) {
     Object.entries(state.changes).forEach(([id, cat]) => changed.set(id, cat));
   }
   renderAll();
-  setStatus(`GAS 저장본 불러옴 · 수정 ${changed.size.toLocaleString("ko-KR")}건`);
+  setStatus("불러옴");
 }
 function unlockWithPin() {
   const pin = document.getElementById("pinInput").value.trim();
@@ -464,7 +498,7 @@ function unlockWithPin() {
   err.textContent = "";
   if (!IS_GAS) {
     document.getElementById("loginBack").style.display = "none";
-    setStatus("");
+    setStatus("임시");
     renderAll();
     return;
   }
@@ -493,6 +527,8 @@ window.addEventListener("DOMContentLoaded", () => {
     document.getElementById("downloadBtn").addEventListener("click", downloadXlsx);
     const downloadTopBtn = document.getElementById("downloadTopBtn"); if (downloadTopBtn) downloadTopBtn.addEventListener("click", downloadXlsx);
     document.getElementById("resetBtn").addEventListener("click", resetChanges);
+    const toggleTopBtn = document.getElementById("toggleTopBtn"); if (toggleTopBtn) toggleTopBtn.addEventListener("click", toggleTopArea);
+    restoreTopAreaState();
     document.getElementById("loginBtn").addEventListener("click", unlockWithPin);
     document.getElementById("pinInput").addEventListener("keydown", e => { if (e.key === "Enter") unlockWithPin(); });
   } catch(e) { document.body.innerHTML = `<main><h1>불러오기 실패</h1><p>${esc(e.message)}</p></main>`; console.error(e); }
