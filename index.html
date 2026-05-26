@@ -19,13 +19,13 @@
   select { width:100%; padding:0 10px; }
   button { padding:0 12px; font-weight:700; cursor:pointer; }
   .filters { display:block; margin-top:8px; }
-  .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  .actions { display:grid; grid-template-columns:1fr; gap:8px; margin-top:8px; }
   #bulkCategory { display:none !important; }
   #sheetFilter { width:100%; min-height:40px; font-weight:800; border-color:#b7def5; background:#fff; }
   .monthTabs { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; margin-top:8px; }
   .monthBtn { min-height:34px; padding:0 4px; border-radius:10px; border:1px solid #b7def5; background:rgba(255,255,255,.82); font-size:12px; font-weight:800; color:#1f2937; }
   .monthBtn.active { background:#111827; color:#fff; border-color:#111827; }
-  .topCompactBtn { min-height:40px; border-color:#b7def5; background:rgba(255,255,255,.9); font-weight:900; }
+  .topToggleIcon { width:28px; min-width:28px; height:28px; min-height:28px; padding:0; border-radius:999px; border:1px solid #b7def5; background:rgba(255,255,255,.86); font-size:13px; line-height:1; font-weight:900; display:inline-flex; align-items:center; justify-content:center; }
   .collapsibleTop { overflow:hidden; transition:max-height .22s ease, opacity .18s ease, margin .18s ease; max-height:260px; opacity:1; }
   header.collapsed .collapsibleTop { max-height:0; opacity:0; margin:0; pointer-events:none; }
   header.collapsed { padding-bottom:8px; }
@@ -104,14 +104,14 @@
 <header>
   <div class="topline">
     <h1>소득세 분류 수정기</h1>
-    <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
       <div class="saveStatus" id="saveStatus">확인 전</div>
       <div class="count" id="countText">불러오는 중...</div>
+      <button class="topToggleIcon" id="toggleTopBtn" type="button" aria-label="상단 접기">▲</button>
     </div>
   </div>
   <div class="actions">
     <button class="primary" id="openSummaryBtn">통합확인</button>
-    <button class="topCompactBtn" id="toggleTopBtn" type="button">접기</button>
   </div>
   <div class="collapsibleTop" id="collapsibleTop">
     <div class="toolbar">
@@ -466,7 +466,8 @@ function toggleTopArea() {
   const btn = document.getElementById("toggleTopBtn");
   if (!header || !btn) return;
   const collapsed = header.classList.toggle("collapsed");
-  btn.textContent = collapsed ? "펼치기" : "접기";
+  btn.textContent = collapsed ? "▼" : "▲";
+  btn.setAttribute("aria-label", collapsed ? "상단 펼치기" : "상단 접기");
   try { localStorage.setItem("incomeTaxTopCollapsed", collapsed ? "1" : "0"); } catch(e) {}
 }
 function restoreTopAreaState() {
@@ -476,7 +477,8 @@ function restoreTopAreaState() {
   let collapsed = false;
   try { collapsed = localStorage.getItem("incomeTaxTopCollapsed") === "1"; } catch(e) {}
   header.classList.toggle("collapsed", collapsed);
-  btn.textContent = collapsed ? "펼치기" : "접기";
+  btn.textContent = collapsed ? "▼" : "▲";
+  btn.setAttribute("aria-label", collapsed ? "상단 펼치기" : "상단 접기");
 }
 
 function applyServerState(state) {
