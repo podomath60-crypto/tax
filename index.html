@@ -9,7 +9,7 @@
   :root { --bg:#f6f7f9; --fg:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#111827; --soft:#ffffff; --danger:#b91c1c; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif; background:var(--bg); color:var(--fg); }
-  header { position:sticky; top:0; z-index:10; background:linear-gradient(180deg,#dff3ff 0%,#eef8ff 100%); backdrop-filter: blur(10px); border-bottom:1px solid #b7def5; padding:6px 10px; }
+  header { position:sticky; top:0; z-index:10; background:linear-gradient(180deg,#dff3ff 0%,#eef8ff 100%); backdrop-filter: blur(10px); border-bottom:1px solid #b7def5; padding:6px 10px 10px; }
   h1 { margin:0; font-size:15px; letter-spacing:-.04em; }
   .topline { display:flex; gap:6px; align-items:center; justify-content:space-between; flex-wrap:nowrap; min-height:28px; }
   .count { font-size:11px; color:var(--muted); white-space:nowrap; }
@@ -27,19 +27,39 @@
   .actions { display:grid; grid-template-columns:1fr; gap:6px; margin-top:6px; }
   #bulkCategory { display:none !important; }
   #sheetFilter { width:100%; min-height:40px; font-weight:800; border-color:#b7def5; background:#fff; }
-  .monthTabs { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:4px; margin-top:6px; }
+  .monthTabs { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:4px; margin-top:6px; }
   .monthBtn { min-height:28px; padding:0 3px; border-radius:9px; border:1px solid #b7def5; background:rgba(255,255,255,.82); font-size:11px; font-weight:800; color:#1f2937; }
   .monthBtn.active { background:#111827; color:#fff; border-color:#111827; }
-  .topToggleIcon { width:24px; min-width:24px; height:24px; min-height:24px; padding:0; border-radius:999px; border:1px solid #b7def5; background:rgba(255,255,255,.86); font-size:12px; line-height:1; font-weight:900; display:inline-flex; align-items:center; justify-content:center; }
+  .topToggleIcon {
+    position:absolute;
+    left:50%;
+    bottom:-12px;
+    transform:translateX(-50%);
+    width:24px;
+    min-width:24px;
+    height:24px;
+    min-height:24px;
+    padding:0;
+    border-radius:999px;
+    border:1px solid #b7def5;
+    background:#fff;
+    font-size:12px;
+    line-height:1;
+    font-weight:900;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 2px 8px rgba(17,24,39,.12);
+  }
   .collapsibleTop { overflow:hidden; transition:max-height .22s ease, opacity .18s ease, margin .18s ease; max-height:260px; opacity:1; }
   header.collapsed .collapsibleTop { max-height:0; opacity:0; margin:0; pointer-events:none; }
-  header.collapsed { padding-bottom:6px; }
+  header.collapsed { padding-bottom:10px; }
   header.collapsed .toolbar,
   header.collapsed .monthTabs,
   header.collapsed .filters { margin-top:0; }
   .primary { background:var(--accent); color:#fff; border-color:var(--accent); }
   .ghost { background:#fff; }
-  main { padding:12px 10px 88px; max-width:960px; margin:0 auto; }
+  main { padding:18px 10px 88px; max-width:960px; margin:0 auto; }
   .summary { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; margin:8px 0 12px; }
   .sumitem { background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px; }
   .sumitem b { display:block; font-size:14px; margin-bottom:3px; }
@@ -59,6 +79,9 @@
   .allPad { display:none; flex-wrap:wrap; gap:7px; padding-top:2px; }
   .allPad.open { display:flex; }
   .catHint { font-size:11px; color:var(--muted); }
+
+  .loadMoreWrap { grid-column:1 / -1; display:flex; justify-content:center; padding:12px 0 20px; }
+  .loadMoreBtn { min-width:180px; background:#fff; border:1px solid #b7def5; color:#111827; font-weight:900; }
   .modalBack { position:fixed; inset:0; background:rgba(17,24,39,.52); display:none; align-items:flex-end; justify-content:center; padding:0; z-index:40; }
   .modalBack.open { display:flex; }
   .modalPanel { width:min(1080px,100%); max-height:92vh; background:#fff; border-radius:22px 22px 0 0; overflow:hidden; box-shadow:0 -10px 30px rgba(0,0,0,.16); }
@@ -100,7 +123,7 @@
     .topFilters { grid-template-columns:1fr 1fr 1fr; }
     #list { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; align-items:start; }
     .row { margin-bottom:0; height:100%; }
-    .monthTabs { grid-template-columns:repeat(12, minmax(0,1fr)); }
+    .monthTabs { grid-template-columns:repeat(13, minmax(0,1fr)); }
     .monthBtn { min-height:30px; font-size:12px; }
   }
 
@@ -121,7 +144,6 @@
     <h1>소득세 분류 수정기</h1>
     <div style="display:flex; align-items:center; gap:4px; flex-wrap:nowrap;">
       <div class="count" id="countText">불러오는 중...</div>
-      <button class="topToggleIcon" id="toggleTopBtn" type="button" aria-label="상단 접기">▲</button>
     </div>
   </div>
   <div class="actions">
@@ -136,7 +158,7 @@
     </div>
     <div class="monthTabs" id="monthTabs"></div>
   </div>
-  
+  <button class="topToggleIcon" id="toggleTopBtn" type="button" aria-label="상단 접기">▲</button>
 </header>
 <main>
   <section id="list"></section>
@@ -177,6 +199,9 @@ let workbook, rows = [], changed = new Map();
 let APP_PIN = "";
 let saveTimer = null;
 let pendingSave = new Map();
+const INITIAL_RENDER_LIMIT = 80;
+const RENDER_STEP = 80;
+let visibleLimit = INITIAL_RENDER_LIMIT;
 let currentMonthFilter = "all";
 function b64ToArrayBuffer(b64) {
   const binary = atob(b64); const len = binary.length; const bytes = new Uint8Array(len);
@@ -247,6 +272,7 @@ function initMonthTabs() {
     btn.addEventListener("click", e => {
       currentMonthFilter = e.currentTarget.dataset.month || "all";
       box.querySelectorAll(".monthBtn").forEach(b => b.classList.toggle("active", b.dataset.month === currentMonthFilter));
+      visibleLimit = INITIAL_RENDER_LIMIT;
       renderList();
     });
   });
@@ -403,8 +429,11 @@ function renderCategoryButtons(row, pool, current) {
 function renderList() {
   const list = document.getElementById("list");
   const fr = filteredRows();
-  document.getElementById("countText").textContent = `${fr.length.toLocaleString("ko-KR")}건 / 전체 ${rows.length.toLocaleString("ko-KR")}건 / 수정 ${changed.size.toLocaleString("ko-KR")}건`;
-  list.innerHTML = fr.slice(0,500).map(row => {
+  document.getElementById("countText").textContent = `${Math.min(fr.length, visibleLimit).toLocaleString("ko-KR")}건 표시 / 전체 ${fr.length.toLocaleString("ko-KR")}건 / 수정 ${changed.size.toLocaleString("ko-KR")}건`;
+
+  const visibleRows = fr.slice(0, visibleLimit);
+
+  list.innerHTML = visibleRows.map(row => {
     const cat = currentCategory(row);
     const quickPool = [...new Set([row.originalCategory, ...QUICK_CATEGORIES, cat].filter(c => CATEGORIES.includes(c)))];
     const allOpen = quickPool.length >= CATEGORIES.length ? ' open' : '';
@@ -419,7 +448,19 @@ function renderList() {
         <div class="catHint">자주 쓰는 분류는 바로 탭, 필요한 게 없으면 “전체 분류”를 눌러서 손으로 찍으세요.</div>
       </div>
     </article>`;
-  }).join("") + (fr.length>500 ? `<div class="notice">검색 결과가 500건을 넘어서 앞 500건만 표시합니다. 검색/필터를 좁혀주세요.</div>` : "");
+  }).join("");
+
+  if (fr.length > visibleLimit) {
+    list.insertAdjacentHTML("beforeend", `<div class="loadMoreWrap"><button type="button" class="loadMoreBtn" id="loadMoreBtn">더보기 ${Math.min(RENDER_STEP, fr.length - visibleLimit).toLocaleString("ko-KR")}건</button></div>`);
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener("click", () => {
+        visibleLimit += RENDER_STEP;
+        renderList();
+      });
+    }
+  }
+
   list.querySelectorAll('button[data-role="cat"]').forEach(btn => {
     btn.addEventListener('click', e => {
       const article = e.currentTarget.closest('.row');
@@ -439,10 +480,11 @@ function renderList() {
       }
 
       renderSummary();
-      const fr = filteredRows();
-      document.getElementById("countText").textContent = `${fr.length.toLocaleString("ko-KR")}건 / 전체 ${rows.length.toLocaleString("ko-KR")}건 / 수정 ${changed.size.toLocaleString("ko-KR")}건`;
+      const fr2 = filteredRows();
+      document.getElementById("countText").textContent = `${Math.min(fr2.length, visibleLimit).toLocaleString("ko-KR")}건 표시 / 전체 ${fr2.length.toLocaleString("ko-KR")}건 / 수정 ${changed.size.toLocaleString("ko-KR")}건`;
     });
   });
+
   list.querySelectorAll('button[data-role="toggle-all"]').forEach(btn => {
     btn.addEventListener('click', e => {
       const article = e.currentTarget.closest('.row');
@@ -599,7 +641,10 @@ function unlockWithPin() {
 window.addEventListener("DOMContentLoaded", () => {
   try {
     loadWorkbook(); initFilters(); initMonthTabs(); renderAll();
-    ["searchInput","sheetFilter","categoryFilter"].forEach(id => document.getElementById(id).addEventListener("input", renderList));
+    ["searchInput","sheetFilter","categoryFilter"].forEach(id => document.getElementById(id).addEventListener("input", () => {
+      visibleLimit = INITIAL_RENDER_LIMIT;
+      renderList();
+    }));
     const applyBulkBtn = document.getElementById("applyBulkBtn"); if (applyBulkBtn) applyBulkBtn.addEventListener("click", applyBulk);
     document.getElementById("openSummaryBtn").addEventListener("click", openSummaryModal);
     document.getElementById("closeSummaryBtn").addEventListener("click", closeSummaryModal);
