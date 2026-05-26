@@ -9,7 +9,7 @@
   :root { --bg:#f6f7f9; --fg:#111827; --muted:#6b7280; --line:#e5e7eb; --accent:#111827; --soft:#ffffff; --danger:#b91c1c; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Noto Sans KR",Arial,sans-serif; background:var(--bg); color:var(--fg); }
-  header { position:sticky; top:0; z-index:10; background:rgba(255,255,255,.94); backdrop-filter: blur(10px); border-bottom:1px solid var(--line); padding:12px 14px 10px; }
+  header { position:sticky; top:0; z-index:10; background:linear-gradient(180deg,#dff3ff 0%,#eef8ff 100%); backdrop-filter: blur(10px); border-bottom:1px solid #b7def5; padding:12px 14px 10px; }
   h1 { margin:0 0 8px; font-size:18px; letter-spacing:-.04em; }
   .topline { display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
   .count { font-size:13px; color:var(--muted); }
@@ -18,8 +18,8 @@
   input { width:100%; padding:0 12px; }
   select { width:100%; padding:0 10px; }
   button { padding:0 12px; font-weight:700; cursor:pointer; }
-  .filters { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
-  .actions { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:8px; }
+  .filters { display:none !important; }
+  .actions { display:grid; grid-template-columns:1fr; gap:8px; margin-top:8px; }
   .primary { background:var(--accent); color:#fff; border-color:var(--accent); }
   .ghost { background:#fff; }
   main { padding:12px 10px 88px; max-width:960px; margin:0 auto; }
@@ -108,14 +108,11 @@
     <select id="bulkCategory"><option value="">보이는 항목 일괄변경</option></select>
   </div>
   <div class="actions">
-    <button class="ghost" id="applyBulkBtn">일괄 적용</button>
-    <button class="ghost" id="openSummaryBtn">통합확인</button>
-    <button class="primary" id="downloadTopBtn">수정 엑셀 다운로드</button>
+    <button class="primary" id="openSummaryBtn">통합확인</button>
   </div>
   <div class="saveStatus" id="saveStatus" aria-hidden="true"></div>
 </header>
 <main>
-  <section class="summary" id="summaryBox"></section>
   <section id="list"></section>
 </main>
 <div class="modalBack" id="summaryModal">
@@ -221,10 +218,12 @@ function filteredRows() {
   });
 }
 function renderSummary() {
+  const box = document.getElementById("summaryBox");
+  if (!box) return;
   const sums = new Map();
   for (const row of rows) { const cat=currentCategory(row); sums.set(cat,(sums.get(cat)||0)+row.amount); }
   const top = [...sums.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
-  document.getElementById("summaryBox").innerHTML = top.map(([cat,sum])=>`<div class="sumitem"><b>${esc(cat)}</b><span>${fmtMoney(sum)}</span></div>`).join("");
+  box.innerHTML = top.map(([cat,sum])=>`<div class="sumitem"><b>${esc(cat)}</b><span>${fmtMoney(sum)}</span></div>`).join("");
 }
 function setStatus(msg) {
   // 화면에는 시스템/저장 메시지를 표시하지 않습니다.
@@ -438,13 +437,13 @@ window.addEventListener("DOMContentLoaded", () => {
   try {
     loadWorkbook(); initFilters(); renderAll();
     ["searchInput","sheetFilter","categoryFilter","quickFilter"].forEach(id => document.getElementById(id).addEventListener("input", renderList));
-    document.getElementById("applyBulkBtn").addEventListener("click", applyBulk);
+    const applyBulkBtn = document.getElementById("applyBulkBtn"); if (applyBulkBtn) applyBulkBtn.addEventListener("click", applyBulk);
     document.getElementById("openSummaryBtn").addEventListener("click", openSummaryModal);
     document.getElementById("closeSummaryBtn").addEventListener("click", closeSummaryModal);
     document.getElementById("summaryModal").addEventListener("click", e => { if (e.target.id === "summaryModal") closeSummaryModal(); });
     document.addEventListener("keydown", e => { if (e.key === "Escape") closeSummaryModal(); });
     document.getElementById("downloadBtn").addEventListener("click", downloadXlsx);
-    document.getElementById("downloadTopBtn").addEventListener("click", downloadXlsx);
+    const downloadTopBtn = document.getElementById("downloadTopBtn"); if (downloadTopBtn) downloadTopBtn.addEventListener("click", downloadXlsx);
     document.getElementById("resetBtn").addEventListener("click", resetChanges);
     document.getElementById("loginBtn").addEventListener("click", unlockWithPin);
     document.getElementById("pinInput").addEventListener("keydown", e => { if (e.key === "Enter") unlockWithPin(); });
