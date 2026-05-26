@@ -13,13 +13,18 @@
   h1 { margin:0 0 8px; font-size:18px; letter-spacing:-.04em; }
   .topline { display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
   .count { font-size:13px; color:var(--muted); }
-  .toolbar { display:grid; grid-template-columns:1fr 118px; gap:8px; margin-top:10px; }
+  .toolbar { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
   input, select, button { font:inherit; border:1px solid var(--line); border-radius:10px; background:#fff; min-height:40px; }
   input { width:100%; padding:0 12px; }
   select { width:100%; padding:0 10px; }
   button { padding:0 12px; font-weight:700; cursor:pointer; }
-  .filters { display:none !important; }
-  .actions { display:grid; grid-template-columns:1fr; gap:8px; margin-top:8px; }
+  .filters { display:block; margin-top:8px; }
+  .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+  #bulkCategory { display:none !important; }
+  #sheetFilter { width:100%; min-height:40px; font-weight:800; border-color:#b7def5; background:#fff; }
+  .monthTabs { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:6px; margin-top:8px; }
+  .monthBtn { min-height:34px; padding:0 4px; border-radius:10px; border:1px solid #b7def5; background:rgba(255,255,255,.82); font-size:12px; font-weight:800; color:#1f2937; }
+  .monthBtn.active { background:#111827; color:#fff; border-color:#111827; }
   .primary { background:var(--accent); color:#fff; border-color:var(--accent); }
   .ghost { background:#fff; }
   main { padding:12px 10px 88px; max-width:960px; margin:0 auto; }
@@ -95,20 +100,16 @@
     <div class="count" id="countText">불러오는 중...</div>
   </div>
   <div class="toolbar">
-    <input id="searchInput" placeholder="사용처 / 금액 / 분류 검색" />
-    <select id="quickFilter">
-      <option value="all">전체</option>
-      <option value="uncat">미분류만</option>
-      <option value="changed">수정한 것만</option>
-    </select>
-  </div>
-  <div class="filters">
-    <select id="sheetFilter"><option value="all">전체 카드/계좌</option></select>
+    <input id="searchInput" placeholder="검색" />
     <select id="categoryFilter"><option value="all">전체 분류</option></select>
-    <select id="bulkCategory"><option value="">보이는 항목 일괄변경</option></select>
   </div>
   <div class="actions">
     <button class="primary" id="openSummaryBtn">통합확인</button>
+    <select id="sheetFilter"><option value="all">전체 카드/계좌</option></select>
+  </div>
+  <div class="monthTabs" id="monthTabs"></div>
+  <div class="filters">
+    <select id="bulkCategory"><option value="">보이는 항목 일괄변경</option></select>
   </div>
   <div class="saveStatus" id="saveStatus" aria-hidden="true"></div>
 </header>
@@ -152,6 +153,7 @@ let APP_PIN = "";
 let IS_GAS = typeof google !== "undefined" && google.script && google.script.run;
 let saveTimer = null;
 let pendingSave = new Map();
+let currentMonthFilter = "all";
 function b64ToArrayBuffer(b64) {
   const binary = atob(b64); const len = binary.length; const bytes = new Uint8Array(len);
   for (let i=0;i<len;i++) bytes[i] = binary.charCodeAt(i);
@@ -167,6 +169,17 @@ function excelDateToText(v) {
     return `${d.y}-${mm}-${dd}`;
   }
   return String(v).replace(/\n/g," ");
+}
+function rowMonthText(dateText) {
+  const s = String(dateText || "");
+  const m = s.match(/(\d{4})[-./년\s]*(\d{1,2})/);
+  if (!m) return "";
+  return `${m[1]}-${String(Number(m[2])).padStart(2,"0")}`;
+}
+function monthLabel(monthKey) {
+  if (monthKey === "all") return "전체";
+  const parts = monthKey.split("-");
+  return `${Number(parts[1])}월`;
 }
 function money(v) {
   const n = Number(String(v ?? 0).replace(/,/g,""));
@@ -184,6 +197,8 @@ function loadWorkbook() {
       const merchant = cellValue(ws,cfg.merchantCol,r);
       const amount = money(cellValue(ws,cfg.amountCol,r));
       const cat = cellValue(ws,cfg.categoryCol,r) || "미분류";
+      // 원본 7번 탭 기준: 소계/총합계 등 집계제외 행은 웹 목록/통합확인/다운로드 합계에서 제외
+      if (String(cat).trim() === "집계제외") continue;
       if (!merchant && !amount) continue;
       const id = `${cfg.name}!${cfg.categoryCol}${r}`;
       rows.push({ id, sheet:cfg.name, row:r, date:excelDateToText(cellValue(ws,cfg.dateCol,r)), merchant:String(merchant ?? ""), amount, category:String(cat), originalCategory:String(cat), categoryCell:addr(cfg.categoryCol,r) });
@@ -198,18 +213,30 @@ function initFilters() {
   document.getElementById("categoryFilter").insertAdjacentHTML("beforeend", catOpts);
   document.getElementById("bulkCategory").insertAdjacentHTML("beforeend", catOpts);
 }
+function initMonthTabs() {
+  const box = document.getElementById("monthTabs");
+  if (!box) return;
+  const months = [...new Set(rows.map(r => rowMonthText(r.date)).filter(Boolean))].sort();
+  const keys = ["all", ...months];
+  box.innerHTML = keys.map(key => `<button type="button" class="monthBtn ${key === currentMonthFilter ? 'active' : ''}" data-month="${esc(key)}">${esc(monthLabel(key))}</button>`).join("");
+  box.querySelectorAll(".monthBtn").forEach(btn => {
+    btn.addEventListener("click", e => {
+      currentMonthFilter = e.currentTarget.dataset.month || "all";
+      box.querySelectorAll(".monthBtn").forEach(b => b.classList.toggle("active", b.dataset.month === currentMonthFilter));
+      renderList();
+    });
+  });
+}
 function currentCategory(row) { return changed.has(row.id) ? changed.get(row.id) : row.category; }
 function filteredRows() {
   const q = document.getElementById("searchInput").value.trim().toLowerCase();
   const sf = document.getElementById("sheetFilter").value;
   const cf = document.getElementById("categoryFilter").value;
-  const qf = document.getElementById("quickFilter").value;
   return rows.filter(row => {
     const cat = currentCategory(row);
     if (sf !== "all" && row.sheet !== sf) return false;
+    if (currentMonthFilter !== "all" && rowMonthText(row.date) !== currentMonthFilter) return false;
     if (cf !== "all" && cat !== cf) return false;
-    if (qf === "uncat" && cat !== "미분류") return false;
-    if (qf === "changed" && !changed.has(row.id)) return false;
     if (q) {
       const hay = `${row.sheet} ${row.date} ${row.merchant} ${row.amount} ${cat}`.toLowerCase();
       if (!hay.includes(q)) return false;
@@ -221,7 +248,11 @@ function renderSummary() {
   const box = document.getElementById("summaryBox");
   if (!box) return;
   const sums = new Map();
-  for (const row of rows) { const cat=currentCategory(row); sums.set(cat,(sums.get(cat)||0)+row.amount); }
+  for (const row of rows) {
+    const cat=currentCategory(row);
+    if (String(cat).trim() === "집계제외") continue;
+    sums.set(cat,(sums.get(cat)||0)+row.amount);
+  }
   const top = [...sums.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
   box.innerHTML = top.map(([cat,sum])=>`<div class="sumitem"><b>${esc(cat)}</b><span>${fmtMoney(sum)}</span></div>`).join("");
 }
@@ -282,7 +313,7 @@ function renderList() {
   document.getElementById("countText").textContent = `${fr.length.toLocaleString("ko-KR")}건 / 전체 ${rows.length.toLocaleString("ko-KR")}건 / 수정 ${changed.size.toLocaleString("ko-KR")}건`;
   list.innerHTML = fr.slice(0,500).map(row => {
     const cat = currentCategory(row);
-    const quickPool = [...new Set([cat, row.originalCategory, ...QUICK_CATEGORIES].filter(c => CATEGORIES.includes(c)))];
+    const quickPool = [...new Set([row.originalCategory, ...QUICK_CATEGORIES, cat].filter(c => CATEGORIES.includes(c)))];
     const allOpen = quickPool.length >= CATEGORIES.length ? ' open' : '';
     return `<article class="row ${changed.has(row.id)?'changed':''}" data-id="${esc(row.id)}">
       <div class="meta"><span>${esc(row.sheet)} · ${esc(row.date)} · ${row.row}행</span><span>${changed.has(row.id)?'수정됨':'원본'}</span></div>
@@ -298,9 +329,25 @@ function renderList() {
   }).join("") + (fr.length>500 ? `<div class="notice">검색 결과가 500건을 넘어서 앞 500건만 표시합니다. 검색/필터를 좁혀주세요.</div>` : "");
   list.querySelectorAll('button[data-role="cat"]').forEach(btn => {
     btn.addEventListener('click', e => {
+      const article = e.currentTarget.closest('.row');
       const row = rows.find(r=>r.id===e.currentTarget.dataset.id);
-      setRowCategory(row, e.currentTarget.dataset.category);
-      renderSummary(); renderList();
+      const nextCat = e.currentTarget.dataset.category;
+      setRowCategory(row, nextCat);
+
+      if (article) {
+        article.classList.toggle('changed', changed.has(row.id));
+        const currentLabel = article.querySelector('.currentCategoryValue');
+        if (currentLabel) currentLabel.textContent = nextCat;
+        const metaStatus = article.querySelector('.meta span:last-child');
+        if (metaStatus) metaStatus.textContent = changed.has(row.id) ? '수정됨' : '원본';
+        article.querySelectorAll('button[data-role="cat"]').forEach(b => {
+          b.classList.toggle('active', b.dataset.category === nextCat);
+        });
+      }
+
+      renderSummary();
+      const fr = filteredRows();
+      document.getElementById("countText").textContent = `${fr.length.toLocaleString("ko-KR")}건 / 전체 ${rows.length.toLocaleString("ko-KR")}건 / 수정 ${changed.size.toLocaleString("ko-KR")}건`;
     });
   });
   list.querySelectorAll('button[data-role="toggle-all"]').forEach(btn => {
@@ -319,6 +366,7 @@ function buildSummaryModel() {
   for (const cat of CATEGORIES) sums[cat] = Object.fromEntries(sheets.map(s=>[s,0]));
   for (const row of rows) {
     const cat = currentCategory(row);
+    if (String(cat).trim() === "집계제외") continue;
     if (!sums[cat]) sums[cat] = Object.fromEntries(sheets.map(s=>[s,0]));
     sums[cat][row.sheet] += row.amount;
   }
@@ -435,8 +483,8 @@ function unlockWithPin() {
 
 window.addEventListener("DOMContentLoaded", () => {
   try {
-    loadWorkbook(); initFilters(); renderAll();
-    ["searchInput","sheetFilter","categoryFilter","quickFilter"].forEach(id => document.getElementById(id).addEventListener("input", renderList));
+    loadWorkbook(); initFilters(); initMonthTabs(); renderAll();
+    ["searchInput","sheetFilter","categoryFilter"].forEach(id => document.getElementById(id).addEventListener("input", renderList));
     const applyBulkBtn = document.getElementById("applyBulkBtn"); if (applyBulkBtn) applyBulkBtn.addEventListener("click", applyBulk);
     document.getElementById("openSummaryBtn").addEventListener("click", openSummaryModal);
     document.getElementById("closeSummaryBtn").addEventListener("click", closeSummaryModal);
