@@ -14,6 +14,11 @@
   .topline { display:flex; gap:6px; align-items:center; justify-content:space-between; flex-wrap:nowrap; min-height:28px; }
   .count { font-size:11px; color:var(--muted); white-space:nowrap; }
   .toolbar { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px; }
+
+  .topFilters { display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:6px; }
+  .topFilters input,
+  .topFilters select { min-height:34px; }
+  .topFilters #bulkCategory { display:none !important; }
   input, select, button { font:inherit; border:1px solid var(--line); border-radius:10px; background:#fff; min-height:34px; }
   input { width:100%; padding:0 12px; }
   select { width:100%; padding:0 10px; }
@@ -89,6 +94,16 @@
   .notice { font-size:12px; color:var(--muted); line-height:1.45; margin-top:8px; }
   .changed { border-color:#111827; box-shadow:0 0 0 1px #111827 inset; }
   @media (min-width:700px) { .summary { grid-template-columns:repeat(4,1fr); } .toolbar { grid-template-columns:1fr 160px; } .filters { grid-template-columns:160px 160px 160px; } .modalCards { grid-template-columns:repeat(4,minmax(0,1fr)); } .bottom { max-width:960px; left:50%; transform:translateX(-50%); border:1px solid var(--line); border-bottom:0; border-radius:16px 16px 0 0; } }
+
+  @media (min-width:900px) {
+    main { max-width:1440px; padding-left:16px; padding-right:16px; }
+    .topFilters { grid-template-columns:1fr 1fr 1fr; }
+    #list { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; align-items:start; }
+    .row { margin-bottom:0; height:100%; }
+    .monthTabs { grid-template-columns:repeat(12, minmax(0,1fr)); }
+    .monthBtn { min-height:30px; font-size:12px; }
+  }
+
 </style>
 </head>
 <body>
@@ -113,12 +128,10 @@
     <button class="primary" id="openSummaryBtn">통합확인</button>
   </div>
   <div class="collapsibleTop" id="collapsibleTop">
-    <div class="toolbar">
+    <div class="topFilters">
       <input id="searchInput" placeholder="검색" />
-      <select id="categoryFilter"><option value="all">전체 분류</option></select>
-    </div>
-    <div class="filters" style="display:block !important;">
       <select id="sheetFilter"><option value="all">전체 카드/계좌</option></select>
+      <select id="categoryFilter"><option value="all">전체 분류</option></select>
       <select id="bulkCategory"><option value="">보이는 항목 일괄변경</option></select>
     </div>
     <div class="monthTabs" id="monthTabs"></div>
